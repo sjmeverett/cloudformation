@@ -1,0 +1,28 @@
+{
+  "name": "cloudformation",
+  "scripts": {
+    "download": "curl --compressed https://d1uauaxba7bl26.cloudfront.net/latest/gzip/CloudFormationResourceSpecification.json -o src/spec.json",
+    "generate": "ts-node src/generateTypes.ts",
+    "build-ts": "tsc",
+    "build": "npm run download && npm run generate && npm run build-ts"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "@types/archiver": "^3.0.0",
+    "@types/cheerio": "^0.22.16",
+    "@types/lodash": "^4.14.149",
+    "@types/node-fetch": "^2.5.4",
+    "archiver": "^3.1.1",
+    "aws-sdk": "^2.635.0",
+    "cheerio": "^1.0.0-rc.3",
+    "commander": "^4.1.1",
+    "lodash": "^4.17.15",
+    "node-fetch": "^2.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^13.7.0",
+    "ts-node": "^8.6.2",
+    "typescript": "^3.7.5"
+  }
+}
