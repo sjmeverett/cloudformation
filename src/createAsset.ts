@@ -1,11 +1,12 @@
-import { ParameterDef, createParameter } from './createParameter';
+import { Parameter, createParameter } from './createParameter';
 
 export interface Asset {
   name: string;
+  type: 'asset';
   source: string | ((destinationDir: string) => Promise<string>);
   bucket: string;
   key: string;
-  parameters: ParameterDef[];
+  parameters: Parameter[];
 }
 
 export function createAsset(
@@ -14,18 +15,19 @@ export function createAsset(
 ): Asset {
   return {
     name,
+    type: 'asset',
     source,
     bucket: { Ref: name + 'Bucket' } as any,
     key: { Ref: name + 'Key' } as any,
     parameters: [
       createParameter(
         name + 'Bucket',
-        'string',
+        'String',
         `The bucket containing the ${name} asset`,
       ),
       createParameter(
         name + 'Key',
-        'string',
+        'String',
         `The S3 key for the ${name} asset`,
       ),
     ],

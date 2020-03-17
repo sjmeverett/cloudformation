@@ -2,6 +2,7 @@ import { promises as fs, createReadStream } from 'fs';
 import { template, forEach } from 'lodash';
 import { S3, CloudFormation } from 'aws-sdk';
 import { dirname, join } from 'path';
+import { upload } from '../util/upload';
 
 export async function deploy(
   manifestPath: string,
@@ -9,9 +10,10 @@ export async function deploy(
   execute: boolean,
   paramsPath: string | undefined,
 ) {
+  console.log('Deploying...');
   const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf-8'));
   const params = [] as CloudFormation.Parameter[];
-  const s3 = new S3();
+  const s3 = new S3({ region: 'eu-west-2' });
   const manifestDir = dirname(manifestPath);
 
   for (const assetName in manifest.assets) {
@@ -28,13 +30,7 @@ export async function deploy(
       },
     );
 
-    await s3
-      .upload({
-        Bucket: bucket,
-        Key: key,
-        Body: createReadStream(join(manifestDir, key)),
-      })
-      .promise();
+    await upload(s3, bucket, key, createReadStream(join(manifestDir, key)));
   }
 
   if (paramsPath) {
@@ -50,21 +46,21 @@ export async function deploy(
     });
   }
 
-  await s3
-    .upload({
-      Bucket: bucket,
-      Key: manifest.template,
-      Body: createReadStream(join(manifestDir, manifest.template)),
-    })
-    .promise();
+  await upload(
+    s3,
+    bucket,
+    manifest.template,
+    createReadStream(join(manifestDir, manifest.template)),
+  );
 
-  const cloudFormation = new CloudFormation();
+  const cloudFormation = new CloudFormation({ region: 'eu-west-2' });
 
   const { StackSummaries } = await cloudFormation.listStacks({}).promise();
 
   const changeSetType = StackSummaries?.find(
     x =>
-      x.StackName === manifest.name && x.StackStatus !== 'REVIEW_IN_PROGRESS',
+      x.StackName === manifest.name &&
+      !['REVIEW_IN_PROGRESS', 'DELETE_COMPLETE'].includes(x.StackStatus),
   )
     ? 'UPDATE'
     : 'CREATE';
@@ -76,8 +72,9 @@ export async function deploy(
       StackName: manifest.name,
       ChangeSetType: changeSetType,
       ChangeSetName: changeSetName,
-      TemplateURL: `https://s3.amazonaws.com/${bucket}/...`,
-      Parameters: [],
+      TemplateURL: `https://${bucket}.s3.eu-west-2.amazonaws.com/${manifest.template}`,
+      Parameters: params,
+      Capabilities: ['CAPABILITY_IAM'],
     })
     .promise();
 

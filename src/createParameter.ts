@@ -1,5 +1,6 @@
-export interface ParameterDef {
+export interface Parameter {
   name: string;
+  type: 'parameter';
   ref: any;
   definition: {
     Type: string;
@@ -14,9 +15,10 @@ export function createParameter(
   type = 'string',
   description = '',
   defaultValue?: any,
-): ParameterDef {
+): Parameter {
   return {
     name,
+    type: 'parameter',
     definition: {
       Type: type,
       Description: description,

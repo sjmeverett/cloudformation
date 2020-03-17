@@ -1,15 +1,11 @@
-import { Resource } from './resources';
-import { ParameterDef } from './createParameter';
+import { Resource } from './createResource';
+import { Parameter } from './createParameter';
 import { Asset } from './createAsset';
 import { flatMap } from 'lodash';
 import { safeFromPairs } from './util/safeFromPairs';
+import { Module } from './createModule';
 
-export interface StackOptions {
-  resources: Resource<any>[];
-  parameters?: ParameterDef[];
-  assets?: Asset[];
-  description?: string;
-}
+export type StackComponent = Resource | Parameter | Asset | Module;
 
 export interface Stack {
   name: string;
@@ -25,19 +21,29 @@ export interface Stack {
   assets: Asset[];
 }
 
-export function createStack(name: string, options: StackOptions): Stack {
-  const assets = options.assets || [];
+export function createStack(
+  name: string,
+  description: string,
+  components: StackComponent[],
+): Stack {
+  components = flatMap(components, x =>
+    x.type === 'module' ? x.components : x,
+  );
+
+  const assets = components.filter(x => x.type === 'asset') as Asset[];
 
   const parameters = [
-    ...(options.parameters || []),
+    ...(components.filter(x => x.type === 'parameter') as Parameter[]),
     ...flatMap(assets, x => x.parameters),
   ];
 
+  const resources = components.filter(x => x.type === 'resource') as Resource[];
+
   const stack = {
     AWSTemplateFormatVersion: '2010-09-09',
-    Description: options.description || '',
+    Description: description || '',
     Resources: safeFromPairs(
-      options.resources.map(resource => [resource.name, resource.definition]),
+      resources.map(resource => [resource.name, resource.definition]),
     ),
     Parameters: safeFromPairs(
       parameters.map(param => [param.name, param.definition]),

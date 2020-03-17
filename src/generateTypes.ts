@@ -4,7 +4,7 @@ import { fromPairsDeep } from './util/fromPairsDeep';
 
 function generateTypes(spec: any) {
   return flattenDeep<any>([
-    `import { createResource, resources } from './resources';`,
+    `import { createResource, resources } from './createResource';`,
     '',
     // interfaces for all the property types
     getInterfaces(spec.PropertyTypes, 'The `%` property type'),
@@ -38,7 +38,7 @@ function generateTypes(spec: any) {
       ];
     }),
     // merge the ResourceTypes interface declaration with all the resource types
-    `declare module './resources' {`,
+    `declare module './createResource' {`,
     `  export interface ResourceDefinitions {`,
     map(spec.ResourceTypes, (_, type) => {
       const sanitisedName = sanitiseName(type);
@@ -65,7 +65,7 @@ function generateTypes(spec: any) {
       ];
     }),
     // export the other non-generated code
-    `export * from './resources';`,
+    `export * from './createResource';`,
   ]).join('\n');
 }
 

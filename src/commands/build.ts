@@ -11,10 +11,9 @@ export async function build(
 
   const templatePath = `${stack.name}-${version}.template.json`;
 
-  await fs.writeFile(
-    join(destinationDir, templatePath),
-    JSON.stringify(stack.definition, null, 2),
-  );
+  const templateBody = JSON.stringify(stack.definition, null, 2);
+
+  await fs.writeFile(join(destinationDir, templatePath), templateBody);
 
   const manifest = {
     version,

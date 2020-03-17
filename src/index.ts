@@ -3,6 +3,7 @@ export * from './commands/build';
 export * from './commands/deploy';
 
 export * from './createAsset';
+export * from './createModule';
 export * from './createParameter';
 export * from './createStack';
 export * from './createZipAsset';

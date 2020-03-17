@@ -11,14 +11,16 @@ export const resources: ResourceDefinitions = {} as any;
 
 export type ResourceType = keyof ResourceDefinitions;
 
-export interface Resource<Type extends ResourceType> {
+export interface Resource<Type extends ResourceType = any> {
   readonly name: string;
+  readonly type: 'resource';
   readonly ref: any;
   readonly attributes: Readonly<ResourceAttributes<Type>>;
 
   definition: {
     readonly Type: Type;
     Properties: ResourceProperties<Type>;
+    DependsOn?: string[];
   };
 }
 
@@ -41,6 +43,7 @@ export function createResource<Type extends ResourceType>(
 ): Resource<Type> {
   return {
     name,
+    type: 'resource',
     definition: {
       Type: type,
       Properties: properties,

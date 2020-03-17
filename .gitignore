@@ -1,5 +1,8 @@
 node_modules/
 dist/
+out/
 spec.json
 generated.ts
 .DS_Store
+.awsprofilerc
+test/
