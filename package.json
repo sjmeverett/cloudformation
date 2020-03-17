@@ -1,5 +1,5 @@
 {
-  "name": "cloudformation",
+  "name": "@stewartml/cloudformation",
   "scripts": {
     "download": "curl --compressed https://d1uauaxba7bl26.cloudfront.net/latest/gzip/CloudFormationResourceSpecification.json -o src/spec.json",
     "generate": "ts-node src/generateTypes.ts",
