@@ -1,21 +1,23 @@
 import { StackComponent } from './createStack';
 
-export interface Module<T = {}> {
+export interface Module<
+  TComponents extends Record<string, StackComponent> = {},
+  TAttributes extends Record<string, any> = {}
+> {
   name: string;
   type: 'module';
-  components: StackComponent[];
-  attributes: T;
+  components: TComponents;
+  attributes: TAttributes;
 }
 
-export function createModule<T = {}>(
-  name: string,
-  components: StackComponent[],
-  attributes: T,
-) {
+export function createModule<
+  TComponents extends Record<string, StackComponent> = {},
+  TAttributes extends Record<string, any> = {}
+>(name: string, components: TComponents, attributes: TAttributes) {
   return {
     name,
     type: 'module',
     components,
     attributes,
-  } as Module<T>;
+  } as Module<TComponents, TAttributes>;
 }

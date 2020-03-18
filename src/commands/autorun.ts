@@ -40,10 +40,23 @@ export function autorun(stack: Stack) {
       'The path to a file containing values for the parameters',
     )
     .option('-e, --execute', 'If specified, the changeset will be executed')
+    .option('-r, --region', 'The region to deploy to')
     .action((manifestPath, bucket, options) => {
       handled = true;
 
-      deploy(manifestPath, bucket, options.execute, options.paramfile).then(
+      const region =
+        options.region ||
+        process.env.AWS_REGION ||
+        process.env.AWS_DEFAULT_REGION ||
+        'eu-west-2';
+
+      deploy(
+        manifestPath,
+        bucket,
+        options.execute,
+        options.paramfile,
+        region,
+      ).then(
         changeSet => {
           console.log(
             `Created changeset ${changeSet.Id} for stack ${changeSet.StackId}`,

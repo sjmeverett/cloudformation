@@ -26,9 +26,18 @@ export function createStack(
   description: string,
   components: StackComponent[],
 ): Stack {
-  components = flatMap(components, x =>
-    x.type === 'module' ? x.components : x,
-  );
+  components = flattenModules(components);
+  const sharedComponents = new Set<StackComponent>();
+
+  components.forEach(component => {
+    if (component.type === 'resource' && component.sharedComponents) {
+      component.sharedComponents.forEach(component =>
+        sharedComponents.add(component),
+      );
+    }
+  });
+
+  components.push(...sharedComponents.values());
 
   const assets = components.filter(x => x.type === 'asset') as Asset[];
 
@@ -55,4 +64,12 @@ export function createStack(
     assets,
     definition: stack,
   };
+}
+
+function flattenModules(components: StackComponent[]): StackComponent[] {
+  return flatMap(components, component => {
+    return component.type === 'module'
+      ? flattenModules(Object.values(component.components))
+      : component;
+  });
 }

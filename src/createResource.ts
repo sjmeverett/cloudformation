@@ -1,4 +1,5 @@
 import { fromPairsDeep } from './util/fromPairsDeep';
+import { StackComponent } from './createStack';
 
 export interface ResourceDefinitions {}
 
@@ -16,6 +17,7 @@ export interface Resource<Type extends ResourceType = any> {
   readonly type: 'resource';
   readonly ref: any;
   readonly attributes: Readonly<ResourceAttributes<Type>>;
+  sharedComponents?: StackComponent[];
 
   definition: {
     readonly Type: Type;

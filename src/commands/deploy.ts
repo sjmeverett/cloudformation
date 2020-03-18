@@ -9,11 +9,12 @@ export async function deploy(
   bucket: string,
   execute: boolean,
   paramsPath: string | undefined,
+  region: string,
 ) {
   console.log('Deploying...');
   const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf-8'));
   const params = [] as CloudFormation.Parameter[];
-  const s3 = new S3({ region: 'eu-west-2' });
+  const s3 = new S3({ region });
   const manifestDir = dirname(manifestPath);
 
   for (const assetName in manifest.assets) {
@@ -53,7 +54,7 @@ export async function deploy(
     createReadStream(join(manifestDir, manifest.template)),
   );
 
-  const cloudFormation = new CloudFormation({ region: 'eu-west-2' });
+  const cloudFormation = new CloudFormation({ region });
 
   const { StackSummaries } = await cloudFormation.listStacks({}).promise();
 
@@ -72,19 +73,29 @@ export async function deploy(
       StackName: manifest.name,
       ChangeSetType: changeSetType,
       ChangeSetName: changeSetName,
-      TemplateURL: `https://${bucket}.s3.eu-west-2.amazonaws.com/${manifest.template}`,
+      TemplateURL: `https://${bucket}.s3.${region}.amazonaws.com/${manifest.template}`,
       Parameters: params,
       Capabilities: ['CAPABILITY_IAM'],
     })
     .promise();
 
   if (execute) {
+    console.log('Waiting for changeset to be created...');
+
+    await cloudFormation
+      .waitFor('changeSetCreateComplete', { ChangeSetName: changeSetName })
+      .promise();
+
+    console.log('Executing changeset...');
+
     await cloudFormation
       .executeChangeSet({
         StackName: manifest.name,
         ChangeSetName: changeSetName,
       })
       .promise();
+
+    console.log('Done');
   }
 
   return changeSet;

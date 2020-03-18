@@ -1,11 +1,11 @@
 {
   "name": "@stewartml/cloudformation",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "scripts": {
     "download": "curl --compressed https://d1uauaxba7bl26.cloudfront.net/latest/gzip/CloudFormationResourceSpecification.json -o src/spec.json",
     "generate": "ts-node src/generateTypes.ts",
     "build-ts": "tsc",
-    "build": "npm run download && npm run generate && npm run build-ts"
+    "build": "yarn download && yarn generate && yarn build-ts"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,16 +14,24 @@
     "@types/cheerio": "^0.22.16",
     "@types/lodash": "^4.14.149",
     "@types/node-fetch": "^2.5.4",
+    "@types/unzipper": "^0.10.2",
     "archiver": "^3.1.1",
     "aws-sdk": "^2.635.0",
+    "cfn-response": "^1.0.1",
     "cheerio": "^1.0.0-rc.3",
     "commander": "^4.1.1",
+    "decompress": "^4.2.0",
     "gauge": "^3.0.0",
     "lodash": "^4.17.15",
+    "mime-types": "^2.1.26",
     "node-fetch": "^2.6.0",
-    "object-assign": "^4.1.1"
+    "object-assign": "^4.1.1",
+    "resolve-pkg": "^2.0.0",
+    "unzipper": "^0.10.10"
   },
   "devDependencies": {
+    "@types/decompress": "^4.2.3",
+    "@types/mime-types": "^2.1.0",
     "@types/node": "^13.7.0",
     "ts-node": "^8.6.2",
     "typescript": "^3.7.5"

@@ -1,8 +1,19 @@
 import { createAsset } from './createAsset';
-import { zipFolder } from './util/zipFolder';
+import { ZipCallback, createZip } from './util/createZip';
 
-export function createZipAsset(name: string, sourcePath: string) {
+export function createZipAsset(
+  name: string,
+  sourceOrCallback: string | ZipCallback,
+) {
   return createAsset(name, destinationDir =>
-    zipFolder(name, sourcePath, destinationDir),
+    createZip(
+      name,
+      destinationDir,
+      typeof sourceOrCallback === 'string'
+        ? archive => {
+            archive.directory(sourceOrCallback, false);
+          }
+        : sourceOrCallback,
+    ),
   );
 }
