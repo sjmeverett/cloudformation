@@ -3,16 +3,50 @@ import { template, forEach } from 'lodash';
 import { S3, CloudFormation } from 'aws-sdk';
 import { dirname, join } from 'path';
 import { upload } from '../util/upload';
+import { Stack } from '../createStack';
 
 export async function deploy(
-  manifestPath: string,
+  stack: Stack,
+  version: string,
+  destinationDir: string,
   bucket: string,
   execute: boolean,
   paramsPath: string | undefined,
   region: string,
 ) {
+  console.log('Building template and assets...');
+
+  await fs.mkdir(destinationDir, { recursive: true });
+
+  const templatePath = `${stack.name}-${version}.template.json`;
+
+  const templateBody = JSON.stringify(stack.definition, null, 2);
+
+  await fs.writeFile(join(destinationDir, templatePath), templateBody);
+
+  const manifest = {
+    version,
+    name: stack.name,
+    template: templatePath,
+    assets: {} as Record<string, string>,
+  };
+
+  for (const asset of stack.assets) {
+    if (typeof asset.source === 'string') {
+      manifest.assets[asset.name] = asset.source;
+    } else {
+      manifest.assets[asset.name] = await asset.source(destinationDir);
+    }
+  }
+
+  const manifestPath = `${stack.name}-${version}.manifest.json`;
+
+  await fs.writeFile(
+    join(destinationDir, manifestPath),
+    JSON.stringify(manifest, null, 2),
+  );
+
   console.log('Deploying...');
-  const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf-8'));
   const params = [] as CloudFormation.Parameter[];
   const s3 = new S3({ region });
   const manifestDir = dirname(manifestPath);

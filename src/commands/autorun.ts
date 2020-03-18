@@ -1,6 +1,5 @@
 import { Stack } from '../createStack';
 import { Command } from 'commander';
-import { build } from './build';
 import { deploy } from './deploy';
 
 export function autorun(stack: Stack) {
@@ -8,32 +7,17 @@ export function autorun(stack: Stack) {
   let handled = false;
 
   program
-    .command('build <destinationDir>')
+    .command('deploy <destinationDir>')
     .description(
-      'Builds the CloudFormation template and any assets, writing everything to <destinationDir>',
+      'Uploads the template file and any assets referred to by the manifest file and creates a changeset in CloudFormation',
+    )
+    .option(
+      '-b, --bucket <bucket>',
+      'The bucket to upload the template and assets to',
     )
     .option(
       '-V, --stack-version <version>',
       'A unique string representing this version of the stack (e.g. git hash)',
-    )
-    .action((destinationDir, options) => {
-      handled = true;
-
-      build(stack, options.stackVersion, destinationDir).then(
-        manifestPath => {
-          console.log(`Wrote manifest to ${manifestPath}`);
-        },
-        err => {
-          console.error('Build failed.\n');
-          console.error(err.stack);
-        },
-      );
-    });
-
-  program
-    .command('deploy <manifestPath> <bucket>')
-    .description(
-      'Uploads the template file and any assets referred to by the manifest file and creates a changeset in CloudFormation',
     )
     .option(
       '-p, --paramfile <path>',
@@ -41,7 +25,7 @@ export function autorun(stack: Stack) {
     )
     .option('-e, --execute', 'If specified, the changeset will be executed')
     .option('-r, --region', 'The region to deploy to')
-    .action((manifestPath, bucket, options) => {
+    .action((manifestPath, destinationDir, options) => {
       handled = true;
 
       const region =
@@ -51,8 +35,10 @@ export function autorun(stack: Stack) {
         'eu-west-2';
 
       deploy(
+        stack,
         manifestPath,
-        bucket,
+        destinationDir,
+        options.bucket,
         options.execute,
         options.paramfile,
         region,
