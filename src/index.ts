@@ -1,12 +1,13 @@
 export * from './commands/autorun';
-export * from './commands/build';
 export * from './commands/deploy';
 
-export * from './custom/createS3ZipDeployment';
+export * from './custom/createCloudFrontInvalidation';
+export * from './custom/createS3BucketWithContents';
 
 export * from './createAsset';
 export * from './createCustomResource';
 export * from './createLambdaApi';
+export * from './createLambdaAtEdge';
 export * from './createModule';
 export * from './createParameter';
 export * from './createStack';

@@ -1,31 +1,33 @@
 import { promises as fs, createReadStream } from 'fs';
 import { template, forEach } from 'lodash';
 import { S3, CloudFormation } from 'aws-sdk';
-import { dirname, join } from 'path';
+import { join } from 'path';
 import { upload } from '../util/upload';
 import { Stack } from '../createStack';
 
-export async function deploy(
-  stack: Stack,
-  version: string,
-  destinationDir: string,
-  bucket: string,
-  execute: boolean,
-  paramsPath: string | undefined,
-  region: string,
-) {
+export interface DeployOptions {
+  version: string;
+  destinationDir: string;
+  bucket: string;
+  execute: boolean;
+  paramsPath: string | undefined;
+  region: string;
+  packageOnly: boolean;
+}
+
+export async function deploy(stack: Stack, options: DeployOptions) {
   console.log('Building template and assets...');
 
-  await fs.mkdir(destinationDir, { recursive: true });
+  await fs.mkdir(options.destinationDir, { recursive: true });
 
-  const templatePath = `${stack.name}-${version}.template.json`;
+  const templatePath = `${stack.name}-${options.version}.template.json`;
 
   const templateBody = JSON.stringify(stack.definition, null, 2);
 
-  await fs.writeFile(join(destinationDir, templatePath), templateBody);
+  await fs.writeFile(join(options.destinationDir, templatePath), templateBody);
 
   const manifest = {
-    version,
+    version: options.version,
     name: stack.name,
     template: templatePath,
     assets: {} as Record<string, string>,
@@ -35,21 +37,24 @@ export async function deploy(
     if (typeof asset.source === 'string') {
       manifest.assets[asset.name] = asset.source;
     } else {
-      manifest.assets[asset.name] = await asset.source(destinationDir);
+      manifest.assets[asset.name] = await asset.source(options.destinationDir);
     }
   }
 
-  const manifestPath = `${stack.name}-${version}.manifest.json`;
+  const manifestPath = `${stack.name}-${options.version}.manifest.json`;
 
   await fs.writeFile(
-    join(destinationDir, manifestPath),
+    join(options.destinationDir, manifestPath),
     JSON.stringify(manifest, null, 2),
   );
 
+  if (options.packageOnly) {
+    return;
+  }
+
   console.log('Deploying...');
   const params = [] as CloudFormation.Parameter[];
-  const s3 = new S3({ region });
-  const manifestDir = dirname(manifestPath);
+  const s3 = new S3({ region: options.region });
 
   for (const assetName in manifest.assets) {
     const key = manifest.assets[assetName];
@@ -57,7 +62,7 @@ export async function deploy(
     params.push(
       {
         ParameterKey: `${assetName}Bucket`,
-        ParameterValue: bucket,
+        ParameterValue: options.bucket,
       },
       {
         ParameterKey: `${assetName}Key`,
@@ -65,11 +70,16 @@ export async function deploy(
       },
     );
 
-    await upload(s3, bucket, key, createReadStream(join(manifestDir, key)));
+    await upload(
+      s3,
+      options.bucket,
+      key,
+      createReadStream(join(options.destinationDir, key)),
+    );
   }
 
-  if (paramsPath) {
-    const json = await fs.readFile(paramsPath, 'utf-8');
+  if (options.paramsPath) {
+    const json = await fs.readFile(options.paramsPath, 'utf-8');
 
     forEach(JSON.parse(json), (str, key) => {
       const value = template(str)({ env: process.env });
@@ -83,12 +93,12 @@ export async function deploy(
 
   await upload(
     s3,
-    bucket,
+    options.bucket,
     manifest.template,
-    createReadStream(join(manifestDir, manifest.template)),
+    createReadStream(join(options.destinationDir, manifest.template)),
   );
 
-  const cloudFormation = new CloudFormation({ region });
+  const cloudFormation = new CloudFormation({ region: options.region });
 
   const { StackSummaries } = await cloudFormation.listStacks({}).promise();
 
@@ -107,13 +117,13 @@ export async function deploy(
       StackName: manifest.name,
       ChangeSetType: changeSetType,
       ChangeSetName: changeSetName,
-      TemplateURL: `https://${bucket}.s3.${region}.amazonaws.com/${manifest.template}`,
+      TemplateURL: `https://${options.bucket}.s3.${options.region}.amazonaws.com/${manifest.template}`,
       Parameters: params,
       Capabilities: ['CAPABILITY_IAM'],
     })
     .promise();
 
-  if (execute) {
+  if (options.execute) {
     console.log('Waiting for changeset to be created...');
 
     await cloudFormation

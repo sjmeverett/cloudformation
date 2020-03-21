@@ -12,19 +12,30 @@ export const resources: ResourceDefinitions = {} as any;
 
 export type ResourceType = keyof ResourceDefinitions;
 
-export interface Resource<Type extends ResourceType = any> {
+export interface BaseResource<
+  TType = string,
+  TProperties = any,
+  TAttributes = any
+> {
   readonly name: string;
   readonly type: 'resource';
   readonly ref: any;
-  readonly attributes: Readonly<ResourceAttributes<Type>>;
+  readonly attributes: Readonly<TAttributes>;
   sharedComponents?: StackComponent[];
 
   definition: {
-    readonly Type: Type;
-    Properties: ResourceProperties<Type>;
+    readonly Type: TType;
+    Properties: TProperties;
     DependsOn?: string[];
   };
 }
+
+export interface Resource<Type extends ResourceType = any>
+  extends BaseResource<
+    Type,
+    ResourceProperties<Type>,
+    ResourceAttributes<Type>
+  > {}
 
 export type ResourceProperties<
   Type extends ResourceType

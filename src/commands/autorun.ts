@@ -25,7 +25,8 @@ export function autorun(stack: Stack) {
     )
     .option('-e, --execute', 'If specified, the changeset will be executed')
     .option('-r, --region', 'The region to deploy to')
-    .action((manifestPath, destinationDir, options) => {
+    .option('-P, --package-only', 'Only create the template and assets')
+    .action((destinationDir, options) => {
       handled = true;
 
       const region =
@@ -34,23 +35,20 @@ export function autorun(stack: Stack) {
         process.env.AWS_DEFAULT_REGION ||
         'eu-west-2';
 
-      deploy(
-        stack,
-        manifestPath,
+      deploy(stack, {
         destinationDir,
-        options.bucket,
-        options.execute,
-        options.paramfile,
+        version: options.stackVersion,
+        bucket: options.bucket,
+        execute: options.execute,
+        paramsPath: options.paramfile,
+        packageOnly: options.packageOnly,
         region,
-      ).then(
-        changeSet => {
-          console.log(
-            `Created changeset ${changeSet.Id} for stack ${changeSet.StackId}`,
-          );
-        },
+      }).then(
+        () => {},
         err => {
           console.error('Deploy failed.\n');
           console.error(err.stack);
+          process.exit(1);
         },
       );
     });

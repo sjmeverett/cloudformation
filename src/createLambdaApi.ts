@@ -1,6 +1,4 @@
 import {
-  createIAMRole,
-  createLambdaFunction,
   createApiGatewayRestApi,
   createLambdaPermission,
   createApiGatewayResource,
@@ -11,7 +9,6 @@ import {
   createApiGatewayBasePathMapping,
   createRoute53RecordSet,
 } from './generated';
-import { createZipAsset } from './createZipAsset';
 import { createModule } from './createModule';
 import { fnSub } from './fnSub';
 import {

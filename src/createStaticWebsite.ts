@@ -1,14 +1,15 @@
 import {
-  createS3Bucket,
   createS3BucketPolicy,
   createCloudFrontDistribution,
   createCloudFrontCloudFrontOriginAccessIdentity,
   createRoute53RecordSet,
+  CloudFrontDistributionLambdaFunctionAssociation,
 } from './generated';
 import { fnSub } from './fnSub';
 import { createModule } from './createModule';
 import { createZipAsset } from './createZipAsset';
-import { createS3ZipDeployment } from './custom/createS3ZipDeployment';
+import { createS3BucketWithContents } from './custom/createS3BucketWithContents';
+import { createCloudFrontInvalidation } from './custom/createCloudFrontInvalidation';
 
 export interface StaticWebsiteOptions {
   /**
@@ -20,10 +21,6 @@ export interface StaticWebsiteOptions {
    */
   DomainName: string;
   /**
-   * The Route53 zone ID of CloudFront for the region being used
-   */
-  CloudFrontZoneId: string;
-  /**
    * The default index document, e.g. index.html
    */
   IndexDocument: string;
@@ -32,6 +29,10 @@ export interface StaticWebsiteOptions {
    */
   ErrorDocument: string;
   /**
+   * The default root document for CloudFront.
+   */
+  DefaultRootDocument?: string;
+  /**
    * The ARN of the HTTPS certificate
    */
   CertificateArn: string;
@@ -39,18 +40,41 @@ export interface StaticWebsiteOptions {
    * Source folder
    */
   SourceDir: string;
+  /**
+   * Optional environment variables to get written out to /env.js - e.g. for {foo: "bar"},
+   * an env.js will be generated with the following contents:
+   *
+   * window.env = {foo: "bar"};
+   */
+  Environment?: Record<string, any>;
+  /**
+   * Optional lambda function associations for the cloudfront distribution
+   */
+  LambdaFunctionAssociations?: CloudFrontDistributionLambdaFunctionAssociation[];
 }
 
 export function createStaticWebsite(
   name: string,
   options: StaticWebsiteOptions,
 ) {
-  const bucket = createS3Bucket(name + 'Bucket', {
-    AccessControl: 'PublicRead',
-    WebsiteConfiguration: {
-      IndexDocument: options.IndexDocument,
-      ErrorDocument: options.ErrorDocument,
+  const deploymentPackage = createZipAsset(
+    name + 'DeploymentPackage',
+    archive => {
+      archive.directory(options.SourceDir, false);
+
+      if (options.Environment) {
+        archive.append(`window.env = ${JSON.stringify(options.Environment)};`, {
+          name: 'env.js',
+        });
+      }
     },
+  );
+
+  const bucket = createS3BucketWithContents(name + 'Bucket', {
+    SourceBucket: deploymentPackage.bucket,
+    SourceKey: deploymentPackage.key,
+    IndexDocument: options.IndexDocument,
+    ErrorDocument: options.ErrorDocument,
   });
 
   const accessIdentity = createCloudFrontCloudFrontOriginAccessIdentity(
@@ -101,8 +125,9 @@ export function createStaticWebsite(
         Enabled: true,
         HttpVersion: 'http2',
         PriceClass: 'PriceClass_All',
-        DefaultRootObject: options.IndexDocument,
+        DefaultRootObject: options.DefaultRootDocument,
         DefaultCacheBehavior: {
+          LambdaFunctionAssociations: options.LambdaFunctionAssociations,
           AllowedMethods: ['GET', 'HEAD'],
           CachedMethods: ['GET', 'HEAD'],
           Compress: true,
@@ -119,11 +144,24 @@ export function createStaticWebsite(
           AcmCertificateArn: options.CertificateArn,
           SslSupportMethod: 'sni-only',
         },
+        CustomErrorResponses: [
+          {
+            ErrorCode: 403,
+            ResponseCode: 404,
+            ResponsePagePath: '/' + options.ErrorDocument,
+          },
+        ],
       },
     },
   );
 
   cloudfrontDistribution.definition.DependsOn = [bucket.name];
+
+  const invalidation = createCloudFrontInvalidation(name + 'Invalidation', {
+    DistributionId: cloudfrontDistribution.ref,
+    Paths: ['/*'],
+    Key: deploymentPackage.key,
+  });
 
   const route53Domain = createRoute53RecordSet(name + 'Domain', {
     Name: options.DomainName,
@@ -135,29 +173,16 @@ export function createStaticWebsite(
     },
   });
 
-  const deploymentPackage = createZipAsset(
-    name + 'DeploymentPackage',
-    options.SourceDir,
-  );
-
-  const deployment = createS3ZipDeployment(name + 'Deployment', {
-    SourceBucket: deploymentPackage.bucket,
-    SourceKey: deploymentPackage.key,
-    DestinationBucket: bucket.ref,
-    DeploymentName: 'MainDeployment',
-    BucketResourceName: bucket.name,
-  });
-
   return createModule(
     name,
     {
+      deploymentPackage,
       bucket,
       accessIdentity,
       bucketPolicy,
       cloudfrontDistribution,
+      invalidation,
       route53Domain,
-      deploymentPackage,
-      deployment,
     },
     {},
   );

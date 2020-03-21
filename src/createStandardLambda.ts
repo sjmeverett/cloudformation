@@ -6,14 +6,15 @@ import {
 import { createModule } from './createModule';
 import { createZipAsset } from './createZipAsset';
 import { getPackagePaths } from './util/getPackagePaths';
-import { basename } from 'path';
 import { fnSub } from './fnSub';
+import { statSync } from 'fs';
+import { basename } from 'path';
 
 export interface StandardLambdaOptions {
   /**
-   * The folder containing the source code for the lambda
+   * The folder/file containing the source code for the lambda
    */
-  SourceDir: string;
+  Source: string;
   /**
    * The lambda handler (path/to/file.exportedFunction)
    */
@@ -83,14 +84,17 @@ export function createStandardLambda(
 
   // create the lambda source zip
   const source = createZipAsset(name + 'Source', archive => {
-    archive.directory(options.SourceDir, false);
+    if (statSync(options.Source).isDirectory()) {
+      archive.directory(options.Source, false);
+    } else {
+      archive.file(options.Source, { name: basename(options.Source) });
+    }
 
     if (options.NodeModules) {
-      const paths: string[] = [];
-      getPackagePaths(options.SourceDir, options.NodeModules, paths);
+      const packages = getPackagePaths(options.Source, options.NodeModules);
 
-      paths.forEach(path => {
-        archive.directory(path, `node_modules/${basename(path)}`);
+      packages.forEach(pkg => {
+        archive.directory(pkg.path, `node_modules/${pkg.name}`);
       });
     }
   });
