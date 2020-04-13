@@ -2,13 +2,14 @@ import {
   IAMRolePolicy,
   createIAMRole,
   createLambdaFunction,
+  LambdaFunctionVpcConfig,
 } from './generated';
 import { createModule } from './createModule';
 import { createZipAsset } from './createZipAsset';
 import { getPackagePaths } from './util/getPackagePaths';
 import { fnSub } from './fnSub';
 import { statSync } from 'fs';
-import { basename } from 'path';
+import { basename, join } from 'path';
 
 export interface StandardLambdaOptions {
   /**
@@ -36,9 +37,17 @@ export interface StandardLambdaOptions {
    */
   NodeModules?: string[];
   /**
+   * Optional map of package path to replacement source path.
+   */
+  DistributionExtras?: Record<string, string>;
+  /**
    * Timeout in seconds
    */
   Timeout?: number;
+  /**
+   * Optional VPC config
+   */
+  VpcConfig?: LambdaFunctionVpcConfig;
 }
 
 export function createStandardLambda(
@@ -82,10 +91,14 @@ export function createStandardLambda(
     ],
   });
 
+  const distributionExtras = options.DistributionExtras || {};
+
   // create the lambda source zip
   const source = createZipAsset(name + 'Source', archive => {
     if (statSync(options.Source).isDirectory()) {
-      archive.directory(options.Source, false);
+      archive.directory(options.Source, false, data =>
+        distributionExtras[data.name] ? false : data,
+      );
     } else {
       archive.file(options.Source, { name: basename(options.Source) });
     }
@@ -94,8 +107,15 @@ export function createStandardLambda(
       const packages = getPackagePaths(options.Source, options.NodeModules);
 
       packages.forEach(pkg => {
-        archive.directory(pkg.path, `node_modules/${pkg.name}`);
+        archive.directory(pkg.path, `node_modules/${pkg.name}`, data => {
+          const packagePath = join('node_modules', pkg.name, data.name);
+          return distributionExtras[packagePath] ? false : data;
+        });
       });
+    }
+
+    for (const destPath in distributionExtras) {
+      archive.file(distributionExtras[destPath], { name: destPath });
     }
   });
 
@@ -113,6 +133,7 @@ export function createStandardLambda(
       Variables: options.Environment,
     },
     Timeout: options.Timeout,
+    VpcConfig: options.VpcConfig,
   });
 
   return createModule(name, { role, source, lambda }, lambda.attributes);

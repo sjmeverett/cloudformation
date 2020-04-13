@@ -9,21 +9,25 @@ import { S3BucketWithContentsOptions } from './s3BucketWithContentsOptions';
 export const handler = async (event: any, context: any) => {
   const options: S3BucketWithContentsOptions = event.ResourceProperties as any;
 
-  const bucketName = `${event.LogicalResourceId.toLowerCase()}-${Math.floor(
-    Math.random() * 1e9,
-  ).toString(36)}`;
+  const bucketName =
+    event.PhysicalResourceId ||
+    `${event.LogicalResourceId.toLowerCase()}-${Math.floor(
+      Math.random() * 1e9,
+    ).toString(36)}`;
 
   try {
     console.log(event);
     const s3 = new S3();
 
     if (event.RequestType === 'Create' || event.RequestType === 'Update') {
-      await s3
-        .createBucket({
-          Bucket: bucketName,
-          ACL: 'public-read',
-        })
-        .promise();
+      if (!event.PhysicalResourceId) {
+        await s3
+          .createBucket({
+            Bucket: bucketName,
+            ACL: 'public-read',
+          })
+          .promise();
+      }
 
       if (options.IndexDocument || options.ErrorDocument) {
         await s3

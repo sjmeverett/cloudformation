@@ -13,6 +13,7 @@ export function getPackagePaths(
   resolved: ResolvedPackage[] = [],
 ) {
   for (const dep of deps) {
+    if (resolved.find(x => x.name === dep)) continue;
     const path = resolvePkg(dep, { cwd: basePath });
 
     if (path) {

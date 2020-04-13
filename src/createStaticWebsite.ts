@@ -60,7 +60,9 @@ export function createStaticWebsite(
   const deploymentPackage = createZipAsset(
     name + 'DeploymentPackage',
     archive => {
-      archive.directory(options.SourceDir, false);
+      archive.directory(options.SourceDir, false, data => {
+        return data.name === 'env.js' ? false : data;
+      });
 
       if (options.Environment) {
         archive.append(`window.env = ${JSON.stringify(options.Environment)};`, {
@@ -162,6 +164,8 @@ export function createStaticWebsite(
     Paths: ['/*'],
     Key: deploymentPackage.key,
   });
+
+  invalidation.definition.DependsOn = [bucket.name];
 
   const route53Domain = createRoute53RecordSet(name + 'Domain', {
     Name: options.DomainName,
