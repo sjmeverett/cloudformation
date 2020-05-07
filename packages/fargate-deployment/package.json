@@ -1,6 +1,6 @@
 {
-  "name": "@sjmeverett/create-static-website",
-  "description": "Functions to generate CloudFormation for common S3 website setups",
+  "name": "@sjmeverett/fargate-deployment",
+  "description": "Functions to generate CloudFormation for Fargate deployments",
   "version": "2.0.0",
   "publishConfig": {
     "access": "public"
@@ -17,10 +17,7 @@
     "ts-node": "^8.6.2",
     "typescript": "^3.7.5"
   },
-  "dependencies": {
-    "@sjmeverett/cloudfront-invalidation-resource": "^2",
-    "@sjmeverett/s3-bucket-with-contents-resource": "^2"
-  },
+  "dependencies": {},
   "peerDependencies": {
     "@sjmeverett/cloudformation-types": "*"
   },
