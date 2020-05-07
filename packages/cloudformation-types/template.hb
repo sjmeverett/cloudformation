@@ -139,7 +139,7 @@ export function getAttribute<TAttributes, TName extends keyof TAttributes>(
   resource: ResourceDescription<any, any, TAttributes>,
   name: TName,
 ): TAttributes[TName] {
-  return { 'Fn:GetAtt': [getName(resource), name] } as any;
+  return { 'Fn::GetAtt': [getName(resource), name] } as any;
 }
 
 /**
