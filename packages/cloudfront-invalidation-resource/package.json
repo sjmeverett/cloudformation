@@ -1,6 +1,6 @@
 {
   "name": "@sjmeverett/cloudfront-invalidation-resource",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "author": "Stewart Everett (https://sjmeverett.uk)",
   "scripts": {
     "build": "rollup -c && node pack.js && tsc"
@@ -15,7 +15,7 @@
     "@rollup/plugin-json": "^4.0.3",
     "@rollup/plugin-node-resolve": "^7.1.3",
     "@rollup/plugin-typescript": "^4.1.1",
-    "@sjmeverett/cloudformation-types": "^2.0.0",
+    "@sjmeverett/cloudformation-types": "^2.0.2",
     "@types/node": "^13.13.4",
     "archiver": "^4.0.1",
     "rollup": "^2.7.3",
@@ -23,7 +23,7 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "@sjmeverett/cloudformation-lambda": "^2.0.0",
+    "@sjmeverett/cloudformation-lambda": "^2.0.2",
     "@types/node-fetch": "^2.5.7",
     "aws-sdk": "^2.665.0",
     "node-fetch": "^2.6.0"

@@ -1,6 +1,6 @@
 {
   "name": "@sjmeverett/s3-bucket-with-contents-resource",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "author": "Stewart Everett (https://sjmeverett.uk)",
   "scripts": {
     "build": "rollup -c && node pack.js && tsc"
@@ -15,7 +15,7 @@
     "@rollup/plugin-json": "^4.0.3",
     "@rollup/plugin-node-resolve": "^7.1.3",
     "@rollup/plugin-typescript": "^4.1.1",
-    "@sjmeverett/cloudformation-types": "^2.0.0",
+    "@sjmeverett/cloudformation-types": "^2.0.2",
     "@sjmeverett/get-package-paths": "^1.0.0",
     "@types/mime-types": "^2.1.0",
     "@types/node": "^13.13.4",
@@ -25,7 +25,7 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "@sjmeverett/cloudformation-lambda": "^2.0.0",
+    "@sjmeverett/cloudformation-lambda": "^2.0.2",
     "@types/node-fetch": "^2.5.7",
     "@types/unzipper": "^0.10.3",
     "aws-sdk": "^2.665.0",
