@@ -158,7 +158,7 @@ export function getResources(
     obj[getName(resource)] = resource;
   });
 
-  return resources;
+  return obj;
 }
 
 export function fnSub(str: string, vars?: Record<string, string>): string {
