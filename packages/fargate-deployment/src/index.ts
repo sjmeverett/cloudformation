@@ -308,7 +308,7 @@ export function createFargateDeployment(
       MaximumPercent: 200,
       MinimumHealthyPercent: 75,
     },
-    DesiredCount: options.DesiredCount,
+    DesiredCount: options.DesiredCount || 2,
     NetworkConfiguration: {
       AwsvpcConfiguration: {
         SecurityGroups: [getRef(containerSecurityGroup)],

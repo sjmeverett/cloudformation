@@ -3,7 +3,8 @@
   "version": "2.0.3",
   "author": "Stewart Everett (https://sjmeverett.uk)",
   "scripts": {
-    "build": "rollup -c && node pack.js && tsc"
+    "build": "tsc && rollup -c && node pack.js",
+    "clean": "rm -rf dist build"
   },
   "publishConfig": {
     "access": "public"
@@ -14,12 +15,10 @@
     "@rollup/plugin-commonjs": "^11.1.0",
     "@rollup/plugin-json": "^4.0.3",
     "@rollup/plugin-node-resolve": "^7.1.3",
-    "@rollup/plugin-typescript": "^4.1.1",
     "@sjmeverett/cloudformation-types": "^2.0.3",
     "@types/node": "^13.13.4",
     "archiver": "^4.0.1",
     "rollup": "^2.7.3",
-    "tslib": "^1.11.1",
     "typescript": "^3.8.3"
   },
   "dependencies": {
