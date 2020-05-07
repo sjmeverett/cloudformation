@@ -1,7 +1,7 @@
 {
   "name": "@sjmeverett/create-static-website",
   "description": "Functions to generate CloudFormation for common S3 website setups",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "publishConfig": {
     "access": "public"
   },
@@ -13,14 +13,14 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "devDependencies": {
-    "@sjmeverett/cloudformation-types": "^2.0.3",
+    "@sjmeverett/cloudformation-types": "^2.0.4",
     "@types/node": "^13.13.5",
     "ts-node": "^8.6.2",
     "typescript": "^3.7.5"
   },
   "dependencies": {
-    "@sjmeverett/cloudfront-invalidation-resource": "^2.0.3",
-    "@sjmeverett/s3-bucket-with-contents-resource": "^2.0.3"
+    "@sjmeverett/cloudfront-invalidation-resource": "^2.0.4",
+    "@sjmeverett/s3-bucket-with-contents-resource": "^2.0.4"
   },
   "peerDependencies": {
     "@sjmeverett/cloudformation-types": "*"
