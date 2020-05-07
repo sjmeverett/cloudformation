@@ -258,7 +258,13 @@ export function createFargateDeployment(
     },
   );
 
-  dependsOn(targetGroup, loadBalancer);
+  const listener = createElasticLoadBalancingV2Listener(`${name}Listener`, {
+    DefaultActions: [{ TargetGroupArn: getRef(targetGroup), Type: 'forward' }],
+    LoadBalancerArn: getRef(loadBalancer),
+    Port: 443,
+    Protocol: 'HTTPS',
+    Certificates: [{ CertificateArn: options.CertificateArn }],
+  });
 
   const service = createECSService(`${name}Service`, {
     Cluster: getRef(cluster),
@@ -284,17 +290,7 @@ export function createFargateDeployment(
     ],
   });
 
-  dependsOn(service, targetGroup);
-
-  const listener = createElasticLoadBalancingV2Listener(`${name}Listener`, {
-    DefaultActions: [{ TargetGroupArn: getRef(targetGroup), Type: 'forward' }],
-    LoadBalancerArn: getRef(loadBalancer),
-    Port: 443,
-    Protocol: 'HTTPS',
-    Certificates: [{ CertificateArn: options.CertificateArn }],
-  });
-
-  dependsOn(listener, loadBalancer);
+  dependsOn(service, listener);
 
   const recordset = createRoute53RecordSet(`${name}RecordSet`, {
     Name: options.DomainName,
