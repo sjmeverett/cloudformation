@@ -12,10 +12,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "devDependencies": {
+    "@sjmeverett/cloudformation-types": "^2.0.0",
     "@types/node": "^13.13.5",
     "ts-node": "^8.6.2",
-    "typescript": "^3.7.5",
-    "@sjmeverett/cloudformation-types": "^2"
+    "typescript": "^3.7.5"
   },
   "peerDependencies": {
     "@sjmeverett/cloudformation-types": "*"
