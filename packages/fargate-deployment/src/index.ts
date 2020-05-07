@@ -100,7 +100,6 @@ export interface FargateDeploymentResources {
   albIngress: EC2SecurityGroupIngressDescription;
   selfIngress: EC2SecurityGroupIngressDescription;
   loadBalancer: ElasticLoadBalancingV2LoadBalancerDescription;
-  ecsRole: IAMRoleDescription;
   executionRole: IAMRoleDescription;
   taskRole: IAMRoleDescription;
   task: ECSTaskDefinitionDescription;
@@ -125,7 +124,7 @@ export function createFargateDeployment(
   );
 
   const loadBalancerSecurityGroup = createEC2SecurityGroup(
-    `${name}ContainerSecurityGroup`,
+    `${name}LoadBalancerSecurityGroup`,
     {
       GroupDescription: 'Access to the public facing load balancer',
       VpcId: options.VpcId,
@@ -158,47 +157,6 @@ export function createFargateDeployment(
       SecurityGroups: [getRef(loadBalancerSecurityGroup)],
     },
   );
-
-  const ecsRole = createIAMRole(`${name}ECSRole`, {
-    AssumeRolePolicyDocument: {
-      Statement: [
-        {
-          Effect: 'Allow',
-          Principal: {
-            Service: 'ecs.amazonaws.com',
-          },
-          Action: 'sts:AssumeRole',
-        },
-      ],
-    },
-    Policies: [
-      {
-        PolicyName: `${name}ECSPolicy`,
-        PolicyDocument: {
-          Statement: [
-            {
-              Effect: 'Allow',
-              Action: [
-                'ec2:AttachNetworkInterface',
-                'ec2:CreateNetworkInterface',
-                'ec2:CreateNetworkInterfacePermission',
-                'ec2:DeleteNetworkInterface',
-                'ec2:DeleteNetworkInterfacePermission',
-                'ec2:Describe*',
-                'ec2:DetachNetworkInterface',
-                'elasticloadbalancing:DeregisterInstancesFromLoadBalancer',
-                'elasticloadbalancing:DeregisterTargets',
-                'elasticloadbalancing:Describe*',
-                'elasticloadbalancing:RegisterInstancesWithLoadBalancer',
-                'elasticloadbalancing:RegisterTargets',
-              ],
-              Resource: '*',
-            },
-          ],
-        },
-      },
-    ],
-  });
 
   const executionRole = createIAMRole(`${name}ExecutionRole`, {
     AssumeRolePolicyDocument: {
@@ -256,7 +214,8 @@ export function createFargateDeployment(
     Memory: (options.ContainerMemory || 512).toString(),
     NetworkMode: 'awsvpc',
     RequiresCompatibilities: ['FARGATE'],
-    ExecutionRoleArn: getAttribute(ecsRole, 'Arn'),
+    ExecutionRoleArn: getAttribute(executionRole, 'Arn'),
+    TaskRoleArn: getAttribute(taskRole, 'Arn'),
     ContainerDefinitions: [
       {
         Name: options.ServiceName,
@@ -355,7 +314,6 @@ export function createFargateDeployment(
     albIngress,
     selfIngress,
     loadBalancer,
-    ecsRole,
     executionRole,
     taskRole,
     task,
