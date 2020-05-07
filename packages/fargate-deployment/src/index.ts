@@ -23,6 +23,7 @@ import {
   ECSServiceDescription,
   ElasticLoadBalancingV2ListenerDescription,
   Route53RecordSetDescription,
+  dependsOn,
 } from '@sjmeverett/cloudformation-types';
 
 export interface FargateDeploymentOptions {
@@ -298,6 +299,8 @@ export function createFargateDeployment(
     },
   );
 
+  dependsOn(targetGroup, loadBalancer);
+
   const service = createECSService(`${name}Service`, {
     Cluster: getRef(cluster),
     LaunchType: 'FARGATE',
@@ -322,6 +325,8 @@ export function createFargateDeployment(
     ],
   });
 
+  dependsOn(service, targetGroup);
+
   const listener = createElasticLoadBalancingV2Listener(`${name}Listener`, {
     DefaultActions: [{ TargetGroupArn: getRef(targetGroup), Type: 'forward' }],
     LoadBalancerArn: getRef(loadBalancer),
@@ -329,6 +334,8 @@ export function createFargateDeployment(
     Protocol: 'HTTPS',
     Certificates: [{ CertificateArn: options.CertificateArn }],
   });
+
+  dependsOn(listener, loadBalancer);
 
   const recordset = createRoute53RecordSet(`${name}RecordSet`, {
     Name: options.DomainName,
