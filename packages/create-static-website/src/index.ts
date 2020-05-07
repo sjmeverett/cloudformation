@@ -12,15 +12,15 @@ import {
   S3BucketPolicyDescription,
   CloudFrontDistributionDescription,
   Route53RecordSetDescription,
-} from "@sjmeverett/cloudformation-types";
+} from '@sjmeverett/cloudformation-types';
 import {
   createCloudFrontInvalidation,
   CloudFrontInvalidationDescription,
-} from "@sjmeverett/cloudfront-invalidation-resource";
+} from '@sjmeverett/cloudfront-invalidation-resource';
 import {
   createS3BucketWithContents,
   S3BucketWithContentsDescription,
-} from "@sjmeverett/s3-bucket-with-contents-resource";
+} from '@sjmeverett/s3-bucket-with-contents-resource';
 
 export interface StaticWebsiteOptions {
   /**
@@ -67,6 +67,10 @@ export interface StaticWebsiteOptions {
    * The ARN of the S3BucketWithContents custom resource lambda.
    */
   S3BucketWithContentsServiceToken: string;
+  /**
+   * A map of key/values that will be saved into `/env.js`
+   */
+  Environment?: Record<string, any>;
 }
 
 export interface StaticWebsiteResources {
@@ -80,38 +84,43 @@ export interface StaticWebsiteResources {
 
 export function createStaticWebsite(
   name: string,
-  options: StaticWebsiteOptions
+  options: StaticWebsiteOptions,
 ): StaticWebsiteResources {
-  const bucket = createS3BucketWithContents(name + "Bucket", {
+  const bucket = createS3BucketWithContents(name + 'Bucket', {
     ServiceToken: options.S3BucketWithContentsServiceToken,
     SourceBucket: options.SourceBucket,
     SourceKey: options.SourceKey,
     IndexDocument: options.IndexDocument,
     ErrorDocument: options.ErrorDocument,
+    ConfigFiles: options.Environment
+      ? {
+          'env.js': `window.env = ${JSON.stringify(options.Environment)};`,
+        }
+      : {},
   });
 
   const accessIdentity = createCloudFrontCloudFrontOriginAccessIdentity(
-    name + "AccessIdentity",
+    name + 'AccessIdentity',
     {
       CloudFrontOriginAccessIdentityConfig: {
         Comment: getRef(bucket),
       },
-    }
+    },
   );
 
-  const bucketPolicy = createS3BucketPolicy(name + "BucketPolicy", {
+  const bucketPolicy = createS3BucketPolicy(name + 'BucketPolicy', {
     Bucket: getRef(bucket),
     PolicyDocument: {
       Statement: [
         {
-          Action: ["s3:GetObject"],
-          Effect: "Allow",
-          Sid: "AddPerm",
-          Resource: fnSub("arn:aws:s3:::${bucket}/*", {
+          Action: ['s3:GetObject'],
+          Effect: 'Allow',
+          Sid: 'AddPerm',
+          Resource: fnSub('arn:aws:s3:::${bucket}/*', {
             bucket: getRef(bucket),
           }),
           Principal: {
-            CanonicalUser: getAttribute(accessIdentity, "S3CanonicalUserId"),
+            CanonicalUser: getAttribute(accessIdentity, 'S3CanonicalUserId'),
           },
         },
       ],
@@ -119,75 +128,75 @@ export function createStaticWebsite(
   });
 
   const cloudfrontDistribution = createCloudFrontDistribution(
-    name + "CloudFrontDistribution",
+    name + 'CloudFrontDistribution',
     {
       DistributionConfig: {
         Aliases: [options.DomainName],
         Origins: [
           {
-            DomainName: getAttribute(bucket, "RegionalDomainName"),
-            Id: "S3Origin",
+            DomainName: getAttribute(bucket, 'RegionalDomainName'),
+            Id: 'S3Origin',
             S3OriginConfig: {
               OriginAccessIdentity: fnSub(
-                "origin-access-identity/cloudfront/${identity}",
+                'origin-access-identity/cloudfront/${identity}',
                 {
                   identity: getRef(accessIdentity),
-                }
+                },
               ),
             },
           },
         ],
         Enabled: true,
-        HttpVersion: "http2",
-        PriceClass: "PriceClass_All",
+        HttpVersion: 'http2',
+        PriceClass: 'PriceClass_All',
         DefaultRootObject: options.DefaultRootDocument,
         DefaultCacheBehavior: {
           LambdaFunctionAssociations: options.LambdaFunctionAssociations,
-          AllowedMethods: ["GET", "HEAD"],
-          CachedMethods: ["GET", "HEAD"],
+          AllowedMethods: ['GET', 'HEAD'],
+          CachedMethods: ['GET', 'HEAD'],
           Compress: true,
-          TargetOriginId: "S3Origin",
+          TargetOriginId: 'S3Origin',
           ForwardedValues: {
             QueryString: true,
             Cookies: {
-              Forward: "none",
+              Forward: 'none',
             },
           },
-          ViewerProtocolPolicy: "redirect-to-https",
+          ViewerProtocolPolicy: 'redirect-to-https',
         },
         ViewerCertificate: {
           AcmCertificateArn: options.CertificateArn,
-          SslSupportMethod: "sni-only",
+          SslSupportMethod: 'sni-only',
         },
         CustomErrorResponses: [
           {
             ErrorCode: 403,
             ResponseCode: 404,
-            ResponsePagePath: "/" + options.ErrorDocument,
+            ResponsePagePath: '/' + options.ErrorDocument,
           },
         ],
       },
-    }
+    },
   );
 
   dependsOn(cloudfrontDistribution, bucket);
 
-  const invalidation = createCloudFrontInvalidation(name + "Invalidation", {
+  const invalidation = createCloudFrontInvalidation(name + 'Invalidation', {
     ServiceToken: options.CloudFrontInvalidationServiceToken,
     DistributionId: getRef(cloudfrontDistribution),
-    Paths: ["/*"],
+    Paths: ['/*'],
     Key: options.SourceKey,
   });
 
   dependsOn(invalidation, bucket);
 
-  const route53Domain = createRoute53RecordSet(name + "Domain", {
+  const route53Domain = createRoute53RecordSet(name + 'Domain', {
     Name: options.DomainName,
-    Type: "A",
+    Type: 'A',
     HostedZoneName: options.HostedZoneName,
     AliasTarget: {
-      HostedZoneId: "Z2FDTNDATAQYW2",
-      DNSName: getAttribute(cloudfrontDistribution, "DomainName"),
+      HostedZoneId: 'Z2FDTNDATAQYW2',
+      DNSName: getAttribute(cloudfrontDistribution, 'DomainName'),
     },
   });
 

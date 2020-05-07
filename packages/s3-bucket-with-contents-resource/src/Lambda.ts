@@ -69,6 +69,19 @@ export const handler = async (event: any, context: any) => {
 
       await zipFile.promise();
 
+      if (options.ConfigFiles) {
+        for (const key in options.ConfigFiles) {
+          await s3
+            .upload({
+              Bucket: bucketName,
+              Key: key,
+              Body: options.ConfigFiles[key],
+              ContentType: lookup(key) || 'application/octet-stream',
+            })
+            .promise();
+        }
+      }
+
       await putResponse('SUCCESS', 'Successfully created', bucketName, event, {
         RegionalDomainName: `${bucketName}.s3.${s3.config.region}.amazonaws.com`,
       });

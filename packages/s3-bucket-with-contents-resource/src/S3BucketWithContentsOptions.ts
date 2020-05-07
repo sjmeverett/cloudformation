@@ -3,4 +3,5 @@ export interface S3BucketWithContentsOptions {
   SourceKey: string;
   IndexDocument?: string;
   ErrorDocument?: string;
+  ConfigFiles?: Record<string, string>;
 }

@@ -4,7 +4,8 @@
   "author": "Stewart Everett (https://sjmeverett.uk)",
   "scripts": {
     "build": "tsc && rollup -c && node pack.js",
-    "clean": "rm -rf dist build"
+    "clean": "rm -rf dist build",
+    "prepack": "yarn build"
   },
   "publishConfig": {
     "access": "public"

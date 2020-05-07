@@ -8,7 +8,8 @@
   "author": "Stewart Everett (https://sjmeverett.uk)",
   "scripts": {
     "build": "tsc",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prepack": "yarn build"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
