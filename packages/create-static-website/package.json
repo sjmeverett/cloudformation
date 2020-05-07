@@ -1,0 +1,36 @@
+{
+  "name": "@sjmeverett/create-static-website",
+  "description": "Functions to generate CloudFormation for common Lambda setups",
+  "version": "2.0.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "Stewart Everett (https://sjmeverett.uk)",
+  "scripts": {
+    "build": "tsc"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "devDependencies": {
+    "@sjmeverett/cloudformation-types": "^2",
+    "@types/node": "^13.13.5",
+    "ts-node": "^8.6.2",
+    "typescript": "^3.7.5"
+  },
+  "dependencies": {
+    "@sjmeverett/cloudfront-invalidation-resource": "^2",
+    "@sjmeverett/s3-bucket-with-contents-resource": "^2"
+  },
+  "peerDependencies": {
+    "@sjmeverett/cloudformation-types": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stewartml/cloudformation.git"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/stewartml/cloudformation/issues"
+  },
+  "homepage": "https://github.com/stewartml/cloudformation#readme"
+}
