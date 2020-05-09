@@ -1,7 +1,7 @@
 {
   "name": "@sjmeverett/fargate-deployment",
   "description": "Functions to generate CloudFormation for Fargate deployments",
-  "version": "2.2.2",
+  "version": "2.3.0",
   "publishConfig": {
     "access": "public"
   },
