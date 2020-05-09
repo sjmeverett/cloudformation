@@ -36,6 +36,10 @@ export interface CreateFargateTaskDefinitionOptions {
    * The ARN of the task role.
    */
   TaskRoleArn: string;
+  /**
+   * The name of the CloudWatch log group
+   */
+  LogGroup?: string;
 }
 
 export function createFargateTaskDefinition(
@@ -64,15 +68,16 @@ export function createFargateTaskDefinition(
               Value: options.Environment![Name],
             }))
           : [],
-        LogConfiguration: {
-          LogDriver: 'awslogs',
-          Options: {
-            'awslogs-create-group': 'true',
-            'awslogs-group': name,
-            'awslogs-region': fnSub('${AWS::Region}'),
-            'awslogs-stream-prefix': name,
-          },
-        },
+        LogConfiguration: options.LogGroup
+          ? {
+              LogDriver: 'awslogs',
+              Options: {
+                'awslogs-group': options.LogGroup,
+                'awslogs-region': fnSub('${AWS::Region}'),
+                'awslogs-stream-prefix': options.ServiceName,
+              },
+            }
+          : undefined,
       },
     ],
   });

@@ -21,6 +21,8 @@ import {
   ElasticLoadBalancingV2ListenerDescription,
   Route53RecordSetDescription,
   dependsOn,
+  createLogsLogGroup,
+  LogsLogGroupDescription,
 } from '@sjmeverett/cloudformation-types';
 import { createFargateExecutionRole } from './createFargateExecutionRole';
 import { createECSTaskRole } from './createECSTaskRole';
@@ -106,6 +108,7 @@ export interface FargateDeploymentResources {
   targetGroup: ElasticLoadBalancingV2TargetGroupDescription;
   service: ECSServiceDescription;
   listener: ElasticLoadBalancingV2ListenerDescription;
+  logGroup: LogsLogGroupDescription;
   recordset: Route53RecordSetDescription;
 }
 
@@ -164,10 +167,15 @@ export function createFargateDeployment(
     Policies: options.Policies,
   });
 
+  const logGroup = createLogsLogGroup(`${name}LogGroup`, {
+    LogGroupName: name,
+  });
+
   const task = createFargateTaskDefinition(`${name}Task`, {
     ...options,
     ExecutionRoleArn: getAttribute(executionRole, 'Arn'),
     TaskRoleArn: getAttribute(taskRole, 'Arn'),
+    LogGroup: getRef(logGroup),
   });
 
   const targetGroup = createElasticLoadBalancingV2TargetGroup(
@@ -244,6 +252,7 @@ export function createFargateDeployment(
     targetGroup,
     service,
     listener,
+    logGroup,
     recordset,
   };
 }
