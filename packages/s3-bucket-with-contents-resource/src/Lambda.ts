@@ -96,7 +96,7 @@ export const handler = async (event: any, context: any) => {
           })
           .promise()) as PromiseResult<S3.ListObjectsV2Output, AWSError>;
 
-        token = response.ContinuationToken;
+        token = response.NextContinuationToken;
 
         if (!response.Contents) {
           break;
