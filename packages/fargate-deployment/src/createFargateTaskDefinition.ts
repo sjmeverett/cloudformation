@@ -15,7 +15,7 @@ export interface CreateFargateTaskDefinitionOptions {
   /**
    * The port the container will listen on.
    */
-  ContainerPort: number;
+  ContainerPort?: number;
   /**
    * How much CPU to give the container, where 1024 is 1 CPU (default 256)
    */
@@ -55,7 +55,9 @@ export function createFargateTaskDefinition(
         Cpu: options.ContainerCpu || 256,
         Memory: options.ContainerMemory || 512,
         Image: options.ImageUrl,
-        PortMappings: [{ ContainerPort: options.ContainerPort }],
+        PortMappings: options.ContainerPort
+          ? [{ ContainerPort: options.ContainerPort }]
+          : undefined,
         Environment: options.Environment
           ? Object.keys(options.Environment).map((Name) => ({
               Name,
