@@ -1,6 +1,6 @@
 {
   "name": "@sjmeverett/s3-bucket-with-contents-resource",
-  "version": "2.1.0",
+  "version": "2.2.3",
   "author": "Stewart Everett (https://sjmeverett.uk)",
   "scripts": {
     "build": "tsc && rollup -c && node pack.js",
