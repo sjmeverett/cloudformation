@@ -1,6 +1,5 @@
 import {
   createECSTaskDefinition,
-  getAttribute,
   fnSub,
 } from '@sjmeverett/cloudformation-types';
 
