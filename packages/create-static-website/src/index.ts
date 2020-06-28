@@ -81,13 +81,13 @@ export type StaticWebsiteResources<TDomains extends string> = {
   invalidation: CloudFrontInvalidationDescription;
 } & Record<TDomains, Route53RecordSetDescription>;
 
-export function createStaticWebsite<TDomains extends string = 'Root'>(
+export function createStaticWebsite<TDomains extends string = 'Domain'>(
   name: string,
   options: StaticWebsiteOptions<TDomains>,
 ): StaticWebsiteResources<TDomains> {
   const domains: Record<TDomains, string> =
     typeof options.DomainName === 'string'
-      ? ({ Root: options.DomainName } as any)
+      ? ({ Domain: options.DomainName } as any)
       : options.DomainName;
 
   if (Object.keys(domains).length === 0) {
