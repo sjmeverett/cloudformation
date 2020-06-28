@@ -94,9 +94,8 @@ function getType(spec: any, namespace: string, typeNames: Set<string>): string {
   } else if (typeNames.has(spec.Type)) {
     return sanitiseName(spec.Type);
   } else {
-    throw new Error(
-      `Unknown type "${spec.Type}" or "${namespace}.${spec.Type}"`,
-    );
+    console.warn(`Unknown type "${spec.Type}" or "${namespace}.${spec.Type}"`);
+    return 'any';
   }
 }
 
