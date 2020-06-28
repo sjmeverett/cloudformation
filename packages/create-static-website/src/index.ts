@@ -21,6 +21,7 @@ import {
   createS3BucketWithContents,
   S3BucketWithContentsDescription,
 } from '@sjmeverett/s3-bucket-with-contents-resource';
+import { domain } from 'process';
 
 export interface StaticWebsiteOptions {
   /**
@@ -36,9 +37,9 @@ export interface StaticWebsiteOptions {
    */
   HostedZoneName: string;
   /**
-   * The domain name of the site
+   * The domain name of the site, or multiple domain names with identifiers as keys.
    */
-  DomainName: string;
+  DomainName: string | Record<string, string>;
   /**
    * The default index document, e.g. index.html
    */
@@ -80,12 +81,22 @@ export interface StaticWebsiteResources {
   cloudfrontDistribution: CloudFrontDistributionDescription;
   invalidation: CloudFrontInvalidationDescription;
   route53Domain: Route53RecordSetDescription;
+  additionalDomains: Route53RecordSetDescription[];
 }
 
 export function createStaticWebsite(
   name: string,
   options: StaticWebsiteOptions,
 ): StaticWebsiteResources {
+  const domains =
+    typeof options.DomainName === 'string'
+      ? { Root: options.DomainName }
+      : options.DomainName;
+
+  if (Object.keys(domain).length === 0) {
+    throw new Error('You must specify at least 1 domain');
+  }
+
   const bucket = createS3BucketWithContents(name + 'Bucket', {
     ServiceToken: options.S3BucketWithContentsServiceToken,
     SourceBucket: options.SourceBucket,
@@ -131,7 +142,7 @@ export function createStaticWebsite(
     name + 'CloudFrontDistribution',
     {
       DistributionConfig: {
-        Aliases: [options.DomainName],
+        Aliases: Object.values(domains),
         Origins: [
           {
             DomainName: getAttribute(bucket, 'RegionalDomainName'),
@@ -190,15 +201,31 @@ export function createStaticWebsite(
 
   dependsOn(invalidation, bucket);
 
-  const route53Domain = createRoute53RecordSet(name + 'Domain', {
-    Name: options.DomainName,
-    Type: 'A',
-    HostedZoneName: options.HostedZoneName,
-    AliasTarget: {
-      HostedZoneId: 'Z2FDTNDATAQYW2',
-      DNSName: getAttribute(cloudfrontDistribution, 'DomainName'),
-    },
-  });
+  const additionalDomains: Route53RecordSetDescription[] = [];
+  let route53Domain: Route53RecordSetDescription | undefined = undefined;
+
+  for (const key in domains) {
+    const domain = createRoute53RecordSet(name + key + 'Domain', {
+      Name: domains[key],
+      Type: 'A',
+      HostedZoneName: options.HostedZoneName,
+      AliasTarget: {
+        HostedZoneId: 'Z2FDTNDATAQYW2',
+        DNSName: getAttribute(cloudfrontDistribution, 'DomainName'),
+      },
+    });
+
+    // backwards compatibility
+    if (key === 'Root') {
+      route53Domain = domain;
+    } else {
+      additionalDomains.push(domain);
+    }
+  }
+
+  if (!route53Domain) {
+    route53Domain = additionalDomains.shift()!;
+  }
 
   return {
     bucket,
@@ -207,5 +234,6 @@ export function createStaticWebsite(
     cloudfrontDistribution,
     invalidation,
     route53Domain,
+    additionalDomains,
   };
 }
