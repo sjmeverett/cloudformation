@@ -21,7 +21,6 @@ import {
   createS3BucketWithContents,
   S3BucketWithContentsDescription,
 } from '@sjmeverett/s3-bucket-with-contents-resource';
-import { domain } from 'process';
 
 export interface StaticWebsiteOptions {
   /**
