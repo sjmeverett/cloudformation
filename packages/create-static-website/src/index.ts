@@ -22,7 +22,7 @@ import {
   S3BucketWithContentsDescription,
 } from '@sjmeverett/s3-bucket-with-contents-resource';
 
-export interface StaticWebsiteOptions {
+export interface StaticWebsiteOptions<TDomains extends string> {
   /**
    * The bucket that contains the source package.
    */
@@ -38,7 +38,7 @@ export interface StaticWebsiteOptions {
   /**
    * The domain name of the site, or multiple domain names with identifiers as keys.
    */
-  DomainName: string | Record<string, string>;
+  DomainName: string | Record<TDomains, string>;
   /**
    * The default index document, e.g. index.html
    */
@@ -73,23 +73,21 @@ export interface StaticWebsiteOptions {
   Environment?: Record<string, any>;
 }
 
-export interface StaticWebsiteResources {
+export type StaticWebsiteResources<TDomains extends string> = {
   bucket: S3BucketWithContentsDescription;
   accessIdentity: CloudFrontCloudFrontOriginAccessIdentityDescription;
   bucketPolicy: S3BucketPolicyDescription;
   cloudfrontDistribution: CloudFrontDistributionDescription;
   invalidation: CloudFrontInvalidationDescription;
-  route53Domain: Route53RecordSetDescription;
-  additionalDomains: Route53RecordSetDescription[];
-}
+} & Record<TDomains, Route53RecordSetDescription>;
 
-export function createStaticWebsite(
+export function createStaticWebsite<TDomains extends string = 'Root'>(
   name: string,
-  options: StaticWebsiteOptions,
-): StaticWebsiteResources {
-  const domains =
+  options: StaticWebsiteOptions<TDomains>,
+): StaticWebsiteResources<TDomains> {
+  const domains: Record<TDomains, string> =
     typeof options.DomainName === 'string'
-      ? { Root: options.DomainName }
+      ? ({ Root: options.DomainName } as any)
       : options.DomainName;
 
   if (Object.keys(domains).length === 0) {
@@ -200,11 +198,10 @@ export function createStaticWebsite(
 
   dependsOn(invalidation, bucket);
 
-  const additionalDomains: Route53RecordSetDescription[] = [];
-  let route53Domain: Route53RecordSetDescription | undefined = undefined;
+  const domainDescriptions = {} as any;
 
   for (const key in domains) {
-    const domain = createRoute53RecordSet(name + key + 'Domain', {
+    domainDescriptions[key] = createRoute53RecordSet(name + key, {
       Name: domains[key],
       Type: 'A',
       HostedZoneName: options.HostedZoneName,
@@ -213,17 +210,6 @@ export function createStaticWebsite(
         DNSName: getAttribute(cloudfrontDistribution, 'DomainName'),
       },
     });
-
-    // backwards compatibility
-    if (key === 'Root') {
-      route53Domain = domain;
-    } else {
-      additionalDomains.push(domain);
-    }
-  }
-
-  if (!route53Domain) {
-    route53Domain = additionalDomains.shift()!;
   }
 
   return {
@@ -232,7 +218,6 @@ export function createStaticWebsite(
     bucketPolicy,
     cloudfrontDistribution,
     invalidation,
-    route53Domain,
-    additionalDomains,
+    ...domainDescriptions,
   };
 }
