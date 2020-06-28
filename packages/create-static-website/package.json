@@ -1,7 +1,7 @@
 {
   "name": "@sjmeverett/create-static-website",
   "description": "Functions to generate CloudFormation for common S3 website setups",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "publishConfig": {
     "access": "public"
   },
