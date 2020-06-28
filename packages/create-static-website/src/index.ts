@@ -93,7 +93,7 @@ export function createStaticWebsite(
       ? { Root: options.DomainName }
       : options.DomainName;
 
-  if (Object.keys(domain).length === 0) {
+  if (Object.keys(domains).length === 0) {
     throw new Error('You must specify at least 1 domain');
   }
 
